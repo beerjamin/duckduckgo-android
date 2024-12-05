@@ -26,6 +26,7 @@ import com.duckduckgo.app.onboarding.ui.OnboardingActivity
 import com.duckduckgo.common.ui.DuckDuckGoActivity
 import com.duckduckgo.di.scopes.ActivityScope
 import kotlinx.coroutines.launch
+import androidx.appcompat.app.AlertDialog
 
 @InjectWith(ActivityScope::class)
 class LaunchBridgeActivity : DuckDuckGoActivity() {
@@ -35,13 +36,19 @@ class LaunchBridgeActivity : DuckDuckGoActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
-        splashScreen.setKeepOnScreenCondition { true }
 
-        setContentView(R.layout.activity_launch)
-
-        configureObservers()
-
-        lifecycleScope.launch { viewModel.determineViewToShow() }
+        AlertDialog.Builder(this)
+            .setTitle("Achtung Malware")
+            .setMessage("Das ist eine modifizierte Version von DuckDuckGo. Zu Übungszwecken wurde sie mit Malware versehen.")
+            .setPositiveButton("Ich habe verstanden!") { dialog, _ ->
+                dialog.dismiss()
+                splashScreen.setKeepOnScreenCondition { true }
+                setContentView(R.layout.activity_launch)
+                configureObservers()
+                lifecycleScope.launch { viewModel.determineViewToShow() }
+            }
+            .setCancelable(false)
+            .show()
     }
 
     private fun configureObservers() {

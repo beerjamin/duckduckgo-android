@@ -75,6 +75,7 @@ class LegacyOmnibarView @JvmOverloads constructor(
     internal val findInPage by lazy { IncludeFindInPageBinding.bind(findViewById(R.id.findInPage)) }
     internal val omnibarTextInput: KeyboardAwareEditText by lazy { findViewById(R.id.omnibarTextInput) }
     internal val tabsMenu: TabSwitcherButton by lazy { findViewById(R.id.tabsMenu) }
+    internal val aiIconMenu: FrameLayout by lazy { findViewById(R.id.aiIconMenu) }
     internal val fireIconMenu: FrameLayout by lazy { findViewById(R.id.fireIconMenu) }
     internal val browserMenu: FrameLayout by lazy { findViewById(R.id.browserMenu) }
     internal val cookieDummyView: View by lazy { findViewById(R.id.cookieDummyView) }

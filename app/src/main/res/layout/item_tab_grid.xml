@@ -28,14 +28,15 @@
 
         <ImageView
             android:id="@+id/favicon"
-            android:layout_width="@dimen/listItemImageSmallSize"
+            android:layout_width="0dp"
             android:layout_height="@dimen/listItemImageSmallSize"
             android:layout_marginStart="10dp"
             android:layout_marginTop="10dp"
             android:contentDescription="@string/faviconContentDescription"
             android:src="@drawable/ic_globe_gray_16dp"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toTopOf="parent"
+            android:visibility="invisible"/>
 
         <ImageView
             android:id="@+id/tabUnread"

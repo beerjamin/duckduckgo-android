@@ -30,7 +30,7 @@
         android:adjustViewBounds="true"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/ic_ddg_comparison_chart" />
+        app:srcCompat="@mipmap/logo_ai_mini" />
 
     <ImageView
         android:id="@+id/chromeLogo"

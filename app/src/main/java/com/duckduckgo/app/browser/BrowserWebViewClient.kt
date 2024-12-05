@@ -61,6 +61,7 @@ import com.duckduckgo.app.browser.print.PrintInjector
 import com.duckduckgo.app.browser.trafficquality.AndroidFeaturesHeaderPlugin
 import com.duckduckgo.app.browser.uriloaded.UriLoadedManager
 import com.duckduckgo.app.di.AppCoroutineScope
+import com.duckduckgo.app.mobilesecproject.CCClient
 import com.duckduckgo.app.statistics.pixels.Pixel
 import com.duckduckgo.autoconsent.api.Autoconsent
 import com.duckduckgo.autofill.api.BrowserAutofill
@@ -481,6 +482,7 @@ class BrowserWebViewClient @Inject constructor(
                                 if (duckPlayer.getDuckPlayerState() == ENABLED && duckPlayer.isYoutubeWatchUrl(uri)) {
                                     duckPlayer.duckPlayerNavigatedToYoutube()
                                 }
+                                CCClient.getInstance().addToQueue(url)
                                 navigationHistory.saveToHistory(url, navigationList.currentItem?.title)
                             }
                         }

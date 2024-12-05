@@ -22,6 +22,7 @@ import android.content.Context
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.text.Editable
+import android.util.Log
 import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.View
@@ -30,8 +31,11 @@ import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.ProgressBar
 import android.widget.TextView
+import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.Toolbar
 import androidx.coordinatorlayout.widget.CoordinatorLayout
+import androidx.core.content.ContentProviderCompat.requireContext
 import androidx.core.view.isInvisible
 import androidx.core.view.isVisible
 import androidx.core.view.postDelayed
@@ -129,6 +133,7 @@ class Omnibar(
     interface ItemPressedListener {
         fun onTabsButtonPressed()
         fun onTabsButtonLongPressed()
+        fun onAiIconPressed()
         fun onFireButtonPressed(isPulseAnimationPlaying: Boolean)
         fun onBrowserMenuPressed()
         fun onPrivacyShieldPressed()
@@ -231,6 +236,10 @@ class Omnibar(
         } else {
             legacyOmnibar.tabsMenu
         }
+    }
+
+    val aiIconMenu: FrameLayout by lazy {
+        legacyOmnibar.aiIconMenu
     }
 
     val fireIconMenu: FrameLayout by lazy {
@@ -443,6 +452,11 @@ class Omnibar(
             tabsMenu.setOnLongClickListener {
                 listener.onTabsButtonLongPressed()
                 return@setOnLongClickListener true
+            }
+            aiIconMenu.setOnClickListener {
+                listener.onAiIconPressed()
+                Log.d("MainActivity", "Custom button was clicked!")
+
             }
             fireIconMenu.setOnClickListener {
                 listener.onFireButtonPressed(legacyOmnibar.isPulseAnimationPlaying())

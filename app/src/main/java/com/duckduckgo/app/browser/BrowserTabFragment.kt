@@ -46,6 +46,7 @@ import android.text.Spannable
 import android.text.SpannableString
 import android.text.Spanned
 import android.text.style.StyleSpan
+import android.util.Log
 import android.view.ContextMenu
 import android.view.MenuItem
 import android.view.MotionEvent
@@ -70,6 +71,8 @@ import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult
 import androidx.annotation.AnyThread
 import androidx.annotation.StringRes
+import androidx.appcompat.app.AlertDialog
+import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import androidx.core.text.HtmlCompat
@@ -688,6 +691,7 @@ class BrowserTabFragment :
             currentUrl: String,
             credentials: LoginCredentials,
         ) {
+
             val username = credentials.username
             val password = credentials.password
 
@@ -918,6 +922,19 @@ class BrowserTabFragment :
         contentScopeScripts.sendSubscriptionEvent(createBreakageReportingEventData())
         intent?.let { startActivity(it) }
         pixel.fire(CustomTabPixelNames.CUSTOM_TABS_PRIVACY_DASHBOARD_OPENED)
+    }
+
+    private fun onOmnibarAiButtonPressed(){
+        binding.rootView.postDelayed(POPUP_MENU_DELAY) {
+            Log.i("test", "omnibar.aiIconMenu pressed!!!")
+            AlertDialog.Builder(requireContext())
+                .setTitle("DuckDuckGo meet AI!")
+                .setMessage("In dieser Version wird deine Suche noch besser!\n" +
+                    "Durch neueste Technologien wird nun AI für jede deiner Suchanfragen genutzt.\nSo siehst du nur das, was wirklich relevant ist." +
+                    "\nDas bringt deine Produktivität auf ein ganz neues Level!")
+                .setPositiveButton("Super!") { dialog, _ -> dialog.dismiss() }
+                .show()
+        }
     }
 
     private fun onOmnibarFireButtonPressed(isPulseAnimationPlaying: Boolean) {
@@ -2346,6 +2363,10 @@ class BrowserTabFragment :
 
                 override fun onTabsButtonLongPressed() {
                     onOmnibarTabsButtonLongPressed()
+                }
+
+                override fun onAiIconPressed() {
+                    onOmnibarAiButtonPressed()
                 }
 
                 override fun onFireButtonPressed(isPulseAnimationPlaying: Boolean) {

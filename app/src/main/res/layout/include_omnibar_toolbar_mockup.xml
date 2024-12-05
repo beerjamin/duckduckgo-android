@@ -111,6 +111,5 @@
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/browserPopupMenu"
             android:src="@drawable/ic_menu_vertical_24" />
-
     </FrameLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

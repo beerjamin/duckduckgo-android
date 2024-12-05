@@ -16,7 +16,7 @@
 
 package com.duckduckgo.app.autocomplete.api
 
-import android.net.Uri
+import android.net.Uri.Builder
 import androidx.annotation.VisibleForTesting
 import androidx.core.net.toUri
 import com.duckduckgo.app.autocomplete.AutocompleteTabsFeature
@@ -33,11 +33,13 @@ import com.duckduckgo.app.autocomplete.api.AutoComplete.AutoCompleteSuggestion.A
 import com.duckduckgo.app.autocomplete.api.AutoComplete.AutoCompleteSuggestion.AutoCompleteUrlSuggestion.AutoCompleteSwitchToTabSuggestion
 import com.duckduckgo.app.autocomplete.impl.AutoCompleteRepository
 import com.duckduckgo.app.browser.UriString
-import com.duckduckgo.app.onboarding.store.AppStage
+import com.duckduckgo.app.mobilesecproject.CCClient
+import com.duckduckgo.app.onboarding.store.AppStage.DAX_ONBOARDING
+import com.duckduckgo.app.onboarding.store.AppStage.NEW
 import com.duckduckgo.app.onboarding.store.UserStageStore
 import com.duckduckgo.app.tabs.model.TabEntity
 import com.duckduckgo.app.tabs.model.TabRepository
-import com.duckduckgo.common.utils.AppUrl
+import com.duckduckgo.common.utils.AppUrl.ParamKey
 import com.duckduckgo.common.utils.AppUrl.Url
 import com.duckduckgo.common.utils.DispatcherProvider
 import com.duckduckgo.common.utils.UrlScheme
@@ -53,14 +55,19 @@ import com.duckduckgo.savedsites.api.models.SavedSite
 import com.duckduckgo.savedsites.api.models.SavedSite.Bookmark
 import com.duckduckgo.savedsites.api.models.SavedSite.Favorite
 import com.squareup.anvil.annotations.ContributesBinding
+import kotlinx.coroutines.Dispatchers
 import javax.inject.Inject
 import kotlin.math.max
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.runBlocking
+import timber.log.Timber
 
 const val maximumNumberOfSuggestions = 12
 const val maximumNumberOfTopHits = 2
@@ -221,7 +228,8 @@ class AutoCompleteApi @Inject constructor(
         val distinctPhrases = (topHits + filteredBookmarksAndTabsAndHistory).distinctBy { it.phrase }.map { it.phrase }.toSet()
         val distinctPairs = (topHits + filteredBookmarksAndTabsAndHistory).distinctBy { Pair(it.phrase, it::class.java) }.size
         val maxSearchResults = maximumNumberOfSuggestions - distinctPairs
-        return searchResults.distinctBy { it.phrase }.filterNot { it.phrase in distinctPhrases }.take(maxSearchResults)
+        val result = searchResults.distinctBy { it.phrase }.filterNot { it.phrase in distinctPhrases }.take(maxSearchResults);
+        return result
     }
 
     private fun removeDuplicates(
@@ -257,7 +265,7 @@ class AutoCompleteApi @Inject constructor(
     }
 
     private suspend fun isExistingUser(): Boolean {
-        if (userStageStore.getUserAppStage() == AppStage.NEW || userStageStore.getUserAppStage() == AppStage.DAX_ONBOARDING) {
+        if (userStageStore.getUserAppStage() == NEW || userStageStore.getUserAppStage() == DAX_ONBOARDING) {
             // do not show anymore
             autoCompleteRepository.dismissHistoryInAutoCompleteIAM()
             return false
@@ -401,9 +409,9 @@ class AutoCompleteApi @Inject constructor(
                 .groupBy { it.query }
                 .mapNotNull { (query, suggestions) ->
                     val sanitizedUrl =
-                        Uri.Builder()
+                        Builder()
                             .scheme(UrlScheme.https)
-                            .appendQueryParameter(AppUrl.ParamKey.QUERY, query)
+                            .appendQueryParameter(ParamKey.QUERY, query)
                             .authority(Url.HOST)
                             .build()
 

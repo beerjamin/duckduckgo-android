@@ -48,7 +48,7 @@
             android:contentDescription="@string/duckDuckGoLogoDescription"
             android:maxWidth="180dp"
             android:maxHeight="180dp"
-            app:srcCompat="@drawable/logo_full"
+            app:srcCompat="@mipmap/logo_ai_mini"
             android:visibility="gone"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintStart_toStartOf="parent"
